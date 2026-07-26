@@ -1,0 +1,177 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-26T12:31:41Z",
+  "title": "Design System: The Gallery House",
+  "extensions": {
+    "colorMeta": {
+      "warm-plaster": {
+        "role": "surface",
+        "displayName": "Warm Plaster",
+        "canonical": "oklch(90.5% 0.014 72)",
+        "tonalRamp": ["oklch(15% 0.014 72)", "oklch(26% 0.014 72)", "oklch(38% 0.014 72)", "oklch(50% 0.014 72)", "oklch(62% 0.014 72)", "oklch(74% 0.014 72)", "oklch(86% 0.014 72)", "oklch(95% 0.014 72)"]
+      },
+      "soft-limestone": {
+        "role": "surface",
+        "displayName": "Soft Limestone",
+        "canonical": "oklch(82.4% 0.026 70)",
+        "tonalRamp": ["oklch(15% 0.026 70)", "oklch(26% 0.026 70)", "oklch(38% 0.026 70)", "oklch(50% 0.026 70)", "oklch(62% 0.026 70)", "oklch(74% 0.026 70)", "oklch(86% 0.026 70)", "oklch(95% 0.026 70)"]
+      },
+      "bone": {
+        "role": "foreground",
+        "displayName": "Bone",
+        "canonical": "oklch(94.5% 0.012 74)",
+        "tonalRamp": ["oklch(15% 0.012 74)", "oklch(26% 0.012 74)", "oklch(38% 0.012 74)", "oklch(50% 0.012 74)", "oklch(62% 0.012 74)", "oklch(74% 0.012 74)", "oklch(86% 0.012 74)", "oklch(95% 0.012 74)"]
+      },
+      "architectural-charcoal": {
+        "role": "background",
+        "displayName": "Architectural Charcoal",
+        "canonical": "oklch(20% 0.007 72)",
+        "tonalRamp": ["oklch(15% 0.007 72)", "oklch(26% 0.007 72)", "oklch(38% 0.007 72)", "oklch(50% 0.007 72)", "oklch(62% 0.007 72)", "oklch(74% 0.007 72)", "oklch(86% 0.007 72)", "oklch(95% 0.007 72)"]
+      },
+      "walnut": {
+        "role": "material",
+        "displayName": "Walnut",
+        "canonical": "oklch(29% 0.027 55)",
+        "tonalRamp": ["oklch(15% 0.027 55)", "oklch(26% 0.027 55)", "oklch(38% 0.027 55)", "oklch(50% 0.027 55)", "oklch(62% 0.027 55)", "oklch(74% 0.027 55)", "oklch(86% 0.027 55)", "oklch(95% 0.027 55)"]
+      },
+      "bronze": {
+        "role": "accent",
+        "displayName": "Bronze",
+        "canonical": "oklch(48% 0.047 65)",
+        "tonalRamp": ["oklch(15% 0.047 65)", "oklch(26% 0.047 65)", "oklch(38% 0.047 65)", "oklch(50% 0.047 65)", "oklch(62% 0.047 65)", "oklch(74% 0.047 65)", "oklch(86% 0.047 65)", "oklch(95% 0.047 65)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Editorial Display",
+        "purpose": "Upright threshold statements at arrival and invitation only."
+      },
+      "body": {
+        "displayName": "Quiet Grotesk",
+        "purpose": "Navigation, project information, captions, and running copy."
+      },
+      "label": {
+        "displayName": "Museum Label",
+        "purpose": "Tracked uppercase chapter and artwork metadata."
+      }
+    },
+    "shadows": [
+      {
+        "name": "physical-only",
+        "value": "none",
+        "purpose": "DOM elements remain flat; shadow and depth come from the Three.js architecture."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "Quiet UI entrances and modal settling."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.65, 0, 0.35, 1)",
+        "purpose": "Balanced state changes with no bounce or overshoot."
+      },
+      {
+        "name": "scroll-damping",
+        "value": "lambda 7.5",
+        "purpose": "Deterministic smoothing between normalized document scroll and camera progress."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact",
+        "value": "640px"
+      },
+      {
+        "name": "mobile-renderer",
+        "value": "760px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Call to Action",
+      "kind": "button",
+      "refersTo": "cta-primary",
+      "description": "The single high-contrast commercial action used in the final salon.",
+      "html": "<button class=\"ds-cta-primary\">Start a Project</button>",
+      "css": ".ds-cta-primary { min-height: 48px; padding: 12px 24px; border: 0; border-radius: 0; background: var(--color-bone); color: var(--color-charcoal); font: 500 13px/1 var(--font-body); cursor: pointer; transition: background-color 220ms var(--ease-out), transform 120ms var(--ease-out); } .ds-cta-primary:hover { background: var(--color-warm-light); transform: translateY(-1px); } .ds-cta-primary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; } .ds-cta-primary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Secondary Call to Action",
+      "kind": "button",
+      "refersTo": "cta-secondary",
+      "description": "A low-chrome text action for opening the accessible work archive.",
+      "html": "<button class=\"ds-cta-secondary\">View Selected Work</button>",
+      "css": ".ds-cta-secondary { min-height: 48px; padding: 12px 0; border: 0; border-bottom: 1px solid currentColor; border-radius: 0; background: transparent; color: var(--color-bone); font: 500 13px/1 var(--font-body); cursor: pointer; transition: color 220ms var(--ease-out), transform 120ms var(--ease-out); } .ds-cta-secondary:hover { color: var(--color-warm-light); transform: translateY(-1px); } .ds-cta-secondary:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; } .ds-cta-secondary:active { transform: translateY(1px); }"
+    },
+    {
+      "name": "Edge Navigation",
+      "kind": "nav",
+      "refersTo": "navigation",
+      "description": "N9 navigation with a serif wordmark and one hard-right destination.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#\">The Gallery House</a><button>Selected Work</button></nav>",
+      "css": ".ds-nav { display: flex; align-items: center; justify-content: space-between; gap: 24px; color: var(--color-bone); font-family: var(--font-body); } .ds-nav a { font: 400 20px/1 var(--font-display); color: inherit; text-decoration: none; } .ds-nav button { min-height: 44px; padding: 0; border: 0; border-bottom: 1px solid currentColor; background: transparent; color: inherit; font: 500 11px/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; } .ds-nav :focus-visible { outline: 2px solid var(--color-focus); outline-offset: 4px; }"
+    },
+    {
+      "name": "Artwork Label",
+      "kind": "custom",
+      "refersTo": "project-metadata",
+      "description": "A frameless museum caption revealed only near its associated work.",
+      "html": "<div class=\"ds-art-label\"><span>Kitchen Passage</span><small>Demonstration study / stock image</small></div>",
+      "css": ".ds-art-label { display: grid; gap: 4px; color: var(--color-bone); } .ds-art-label span { font: 400 20px/1.1 var(--font-display); letter-spacing: -.02em; } .ds-art-label small { font: 500 11px/1.2 var(--font-body); letter-spacing: .13em; text-transform: uppercase; }"
+    },
+    {
+      "name": "Chapter Rail",
+      "kind": "custom",
+      "refersTo": "progress",
+      "description": "A slim informational rail that names the current architectural chapter.",
+      "html": "<div class=\"ds-chapter\"><span>04</span><i></i><span>Compression</span></div>",
+      "css": ".ds-chapter { display: grid; grid-template-rows: auto 112px auto; justify-items: end; gap: 12px; color: var(--color-bone); font: 500 11px/1 var(--font-body); letter-spacing: .12em; text-transform: uppercase; } .ds-chapter i { display: block; width: 1px; height: 100%; background: var(--color-bone); } .ds-chapter span:last-child { writing-mode: vertical-rl; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Gallery House",
+    "overview": "The website behaves like a private architectural exhibition after hours: spatially quiet, materially warm, and composed through alternating compression and release. The interface recedes so limestone openings, controlled pools of light, and physically mounted photography carry the narrative. The system rejects conventional web-section rhythm. Its durable language is monolithic geometry, edge-aligned editorial type, architectural occlusion, and camera movement that always resolves into a stable view.",
+    "keyCharacteristics": [
+      "restrained warm-mineral palette with darkness that retains material detail;",
+      "full-viewport photographic compositions with small museum-like annotations;",
+      "one continuous spatial route with real corners, thresholds, and ceiling changes;",
+      "near-zero decorative interface chrome;",
+      "weighted motion with no bounce, wobble, particles, or novelty rotation."
+    ],
+    "rules": [
+      {
+        "name": "The Photography Rule",
+        "body": "Interface accents stay below five percent of the viewport. The work, not UI color, is the chromatic event.",
+        "section": "colors"
+      },
+      {
+        "name": "The Two-Register Rule",
+        "body": "Upright serif speaks only at key emotional thresholds; restrained grotesk handles every navigational or informational role.",
+        "section": "typography"
+      },
+      {
+        "name": "The Still-Frame Rule",
+        "body": "Every major scroll position must remain visually intentional when motion stops.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use walls, openings, corners, and light spill as transition devices.",
+      "Do let future rooms remain partially concealed.",
+      "Do use real three-dimensional parallax and occlusion where possible.",
+      "Do keep motion damped, deterministic, and resolute.",
+      "Do keep all stock imagery replaceable through one manifest."
+    ],
+    "donts": [
+      "Don't use video, carousel, grid-portfolio, or SaaS-section conventions.",
+      "Don't use neon, chrome-heavy reflections, glassmorphism, particles, lens-flare spectacle, or glowing orbs.",
+      "Don't spin, bounce, wobble, or perpetually float artwork.",
+      "Don't illuminate the whole building evenly.",
+      "Don't let the canvas become the only accessible source of project information."
+    ]
+  }
+}
