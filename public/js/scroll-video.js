@@ -60,9 +60,11 @@ export class ScrollVideo {
     this.video.muted = true;
     this.video.defaultMuted = true;
     this.video.playsInline = true;
+    this.video.autoplay = true;
     this.video.setAttribute("muted", "");
     this.video.setAttribute("playsinline", "");
     this.video.setAttribute("webkit-playsinline", "");
+    this.video.setAttribute("autoplay", "");
     // preload=metadata is safer on mobile (auto can be ignored/blocked)
     this.video.preload = "metadata";
 
@@ -97,19 +99,21 @@ export class ScrollVideo {
 
   // ── Mobile video unlock ─────────────────────────────────────
   _onFirstInteraction() {
-    if (!this.video || this.video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+    if (!this.video) {
       this._removeUnlockListeners();
       return;
     }
     // play() triggers the iOS media pipeline; immediately pause so we can seek.
     const playback = this.video.play();
-    if (playback) {
+    if (playback && typeof playback.then === "function") {
       playback
         .then(() => {
           this.video.pause();
           this._primeFrame();
         })
         .catch(() => this._primeFrame());
+    } else {
+      this._primeFrame();
     }
     this._removeUnlockListeners();
   }
@@ -237,7 +241,17 @@ export class ScrollVideo {
     if (this.scrollTrigger) this.setProgress(this.scrollTrigger.progress);
     else this.onScroll();
 
-    this._primeFrame();
+    // Silent play/pause attempt to prime decoder on desktop and supported mobile
+    const p = this.video.play();
+    if (p && typeof p.then === "function") {
+      p.then(() => {
+        this.video.pause();
+        this._primeFrame();
+      }).catch(() => this._primeFrame());
+    } else {
+      this._primeFrame();
+    }
+
     this.start();
   }
 
