@@ -1,5 +1,5 @@
 {{define "reservation-form"}}
-<form class="reservation-form" method="post" action="/inquiries/reservation" hx-post="/inquiries/reservation" hx-target="#reservation-form-region" hx-swap="innerHTML" hx-indicator="#form-loading" hx-disabled-elt="find button">
+<form class="reservation-form" method="post" action="inquiries/reservation" hx-post="inquiries/reservation" hx-target="#reservation-form-region" hx-swap="innerHTML" hx-indicator="#form-loading" hx-disabled-elt="find button">
   {{template "form-errors" .}}
   <input class="honeypot" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
   <input type="hidden" name="started_at" value="{{nowUnix}}">

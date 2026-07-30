@@ -42,6 +42,8 @@ jobs:
           go run ./cmd/server -generate dist_gh
           pnpm build || true
           cp -r public/* dist_gh/ 2>/dev/null || true
+          mkdir -p dist_gh/public
+          cp -r public/* dist_gh/public/ 2>/dev/null || true
           cp -r dist_gh/pages/* dist_gh/ 2>/dev/null || true
           touch dist_gh/.nojekyll
 

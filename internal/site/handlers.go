@@ -56,7 +56,7 @@ func pageData(info struct{ title, description, page, tmpl string }, courseSlug, 
 }
 
 func nav(current string) []NavItem {
-	items := []NavItem{{"Menu", "/menu", false}, {"Private Dining", "/private-dining", false}, {"Journal", "/journal", false}, {"Reservations", "/reservations", false}}
+	items := []NavItem{{"Menu", "menu", false}, {"Private Dining", "private-dining", false}, {"Journal", "journal", false}, {"Reservations", "reservations", false}}
 	for i := range items {
 		items[i].Current = strings.TrimPrefix(items[i].URL, "/") == current
 	}

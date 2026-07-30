@@ -3,7 +3,7 @@
 <section class="private-services" aria-labelledby="formats-title">
   <header><h2 id="formats-title">Four formats</h2><p>Select a format to read how it works. Every plan is refined after an initial conversation.</p></header>
   <div class="private-services__index">{{range $index, $service := .Services}}
-    <a class="service-button{{if eq $.SelectedService.Slug .Slug}} is-selected{{end}}" {{if eq $.SelectedService.Slug .Slug}}aria-current="true"{{end}} href="/private-dining?service={{.Slug}}" hx-get="/fragments/private-dining/{{.Slug}}" hx-target="#service-detail" hx-swap="innerHTML transition:true" hx-push-url="/private-dining?service={{.Slug}}"><span>0{{addOne $index}}</span>{{.Name}}</a>{{end}}
+    <a class="service-button{{if eq $.SelectedService.Slug .Slug}} is-selected{{end}}" {{if eq $.SelectedService.Slug .Slug}}aria-current="true"{{end}} href="private-dining?service={{.Slug}}" hx-get="fragments/private-dining/{{.Slug}}" hx-target="#service-detail" hx-swap="innerHTML transition:true" hx-push-url="private-dining?service={{.Slug}}"><span>0{{addOne $index}}</span>{{.Name}}</a>{{end}}
   </div>
   <div id="service-detail" class="service-detail" aria-live="polite">{{template "private-service" .SelectedService}}</div>
 </section>
@@ -11,5 +11,5 @@
   <header><p class="kicker">Before / during / after</p><h2>The work around service.</h2></header>
   <ol><li><span>Before</span><h3>Listen and map</h3><p>We discuss the occasion, kitchen, location, timing, guest needs, allergies, accessibility, and the atmosphere you want.</p></li><li><span>During</span><h3>Cook and recede</h3><p>The service is paced to the room. Where practical, we manage setup and the movement between kitchen and table quietly.</p></li><li><span>After</span><h3>Leave the room settled</h3><p>Service concludes with an agreed handover. Site-specific logistics and responsibilities are confirmed before the date.</p></li></ol>
 </section>
-<section class="considerations"><h2>Dietary and access considerations</h2><p>Tell us about allergies, dietary requirements, mobility, sensory needs, or any feature of the setting that affects service. We will discuss what can be accommodated safely before proposing a menu.</p><a class="text-link" href="/reservations">Send a private-dining inquiry <span aria-hidden="true">→</span></a></section>
+<section class="considerations"><h2>Dietary and access considerations</h2><p>Tell us about allergies, dietary requirements, mobility, sensory needs, or any feature of the setting that affects service. We will discuss what can be accommodated safely before proposing a menu.</p><a class="text-link" href="reservations">Send a private-dining inquiry <span aria-hidden="true">→</span></a></section>
 {{end}}

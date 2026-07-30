@@ -4,7 +4,7 @@
   <div class="course-index">
     <h2 id="course-index-title">Course index</h2>
     <ol>{{range .Courses}}
-      <li><a class="course-button{{if eq $.SelectedCourse.Slug .Slug}} is-selected{{end}}" {{if eq $.SelectedCourse.Slug .Slug}}aria-current="true"{{end}} href="/menu?course={{.Slug}}" hx-get="/fragments/menu/{{.Slug}}" hx-target="#course-detail" hx-swap="innerHTML transition:true" hx-push-url="/menu?course={{.Slug}}" hx-indicator="#course-loading"><span>{{.Number}}</span><strong>{{.Name}}</strong><small>{{.Marker}}</small></a></li>{{end}}
+      <li><a class="course-button{{if eq $.SelectedCourse.Slug .Slug}} is-selected{{end}}" {{if eq $.SelectedCourse.Slug .Slug}}aria-current="true"{{end}} href="menu?course={{.Slug}}" hx-get="fragments/menu/{{.Slug}}" hx-target="#course-detail" hx-swap="innerHTML transition:true" hx-push-url="menu?course={{.Slug}}" hx-indicator="#course-loading"><span>{{.Number}}</span><strong>{{.Name}}</strong><small>{{.Marker}}</small></a></li>{{end}}
     </ol>
     <p class="menu-key">V vegetarian · VG plant-based · GF prepared without gluten-containing ingredients. Dietary suitability is discussed before service.</p>
   </div>
@@ -13,5 +13,5 @@
     <div id="course-detail" class="course-detail" aria-live="polite">{{template "menu-course" .SelectedCourse}}</div>
   </div>
 </section>
-<section class="menu-close"><h2>The final menu belongs to the table.</h2><p>Tell us about the setting, guests, dietary requirements, and the kind of evening you want to make room for.</p><a class="text-link" href="/reservations">Start an inquiry <span aria-hidden="true">→</span></a></section>
+<section class="menu-close"><h2>The final menu belongs to the table.</h2><p>Tell us about the setting, guests, dietary requirements, and the kind of evening you want to make room for.</p><a class="text-link" href="reservations">Start an inquiry <span aria-hidden="true">→</span></a></section>
 {{end}}
