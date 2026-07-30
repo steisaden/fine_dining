@@ -206,28 +206,40 @@ export class ScrollVideo {
   }
 
   updateChapters(progress) {
+    const totalChapters = this.chapters.length;
+    if (!totalChapters) return;
+
+    const step = 1 / (totalChapters - 1); // 0.25 for 5 chapters
     let active = 0;
-    for (let i = 0; i < SCROLL_VIDEO_CONFIG.chapters.length - 1; i++) {
-      if (progress >= SCROLL_VIDEO_CONFIG.chapters[i]) active = i;
+
+    for (let i = 0; i < totalChapters; i++) {
+      if (progress >= i * step - step * 0.5) {
+        active = i;
+      }
     }
 
+    // Update chapter index active state
     this.indexItems.forEach((item, i) => item.classList.toggle("is-active", i === active));
-    this.chapters.forEach((chapter, i) => {
-      const start = SCROLL_VIDEO_CONFIG.chapters[i];
-      const end = SCROLL_VIDEO_CONFIG.chapters[i + 1];
-      const local = Math.min(1, Math.max(0, (progress - start) / Math.max(0.001, end - start)));
-      const entering = i === 0 ? 1 : local * 7;
-      const exiting = i === this.chapters.length - 1 ? 1 : (1 - local) * 7;
-      const presence = Math.min(1, entering, exiting);
-      const x = i % 2 ? (1 - presence) * 18 : 0;
-      const y = (1 - presence) * 12;
 
-      if (window.gsap) {
-        window.gsap.set(chapter, { autoAlpha: Math.max(0, presence), x, y });
+    // Spatial vertical gliding animation for each chapter synced to scroll position
+    this.chapters.forEach((chapter, i) => {
+      const targetP = i * step; // 0.0, 0.25, 0.5, 0.75, 1.0
+      const dist = (progress - targetP) / step; // -1 to +1 between adjacent chapters
+
+      // Opacity peaks at 1 when dist == 0, fades out when |dist| >= 0.7
+      const opacity = Math.max(0, 1 - Math.abs(dist) * 1.45);
+
+      // Y offset: moves from +60px (entering from below) to -60px (exiting above)
+      const y = -dist * 60;
+
+      if (opacity > 0.01) {
+        chapter.style.visibility = "visible";
+        chapter.style.opacity = opacity.toFixed(3);
+        chapter.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`;
       } else {
-        chapter.style.visibility = presence > 0.01 ? "visible" : "hidden";
-        chapter.style.opacity = String(Math.max(0, presence));
-        chapter.style.transform = `translate3d(${x}px,${y}px,0)`;
+        chapter.style.visibility = "hidden";
+        chapter.style.opacity = "0";
+        chapter.style.transform = `translate3d(0, 60px, 0)`;
       }
     });
   }
