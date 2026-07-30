@@ -1,0 +1,8 @@
+{{define "menu-course"}}<article tabindex="-1" data-focus-on-swap>
+  <p class="course-detail__number">Course {{.Number}} <span>{{.Marker}}</span></p>
+  <h3>{{.Name}}</h3>
+  <p class="course-detail__ingredients">{{.Ingredients}}</p>
+  <div class="course-detail__rule" aria-hidden="true"></div>
+  <p>{{.Notes}}</p>
+  <p class="course-detail__season">Seasonal availability / discussed when planning</p>
+</article>{{end}}

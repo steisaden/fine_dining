@@ -1,0 +1,7 @@
+{{define "reservations-content"}}
+<header class="page-intro page-intro--reservations"><p class="kicker">Service inquiry</p><h1>Start with the shape of the evening.</h1><p>Share what is known. We’ll respond with questions and possible next steps. Submission does not confirm a reservation.</p></header>
+<section class="reservation-shell">
+  <aside><p class="kicker">Useful details</p><ul><li>Preferred and alternate dates</li><li>Number of guests</li><li>Kitchen and dining location</li><li>Dietary and accessibility needs</li><li>The reason for gathering</li></ul><p>Fields marked <span aria-hidden="true">*</span><span class="sr-only">with an asterisk</span> are required.</p></aside>
+  <div id="reservation-form-region">{{if .Success}}{{template "form-success" .}}{{else}}{{template "reservation-form" .}}{{end}}</div>
+</section>
+{{end}}

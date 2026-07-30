@@ -1,5 +1,7 @@
 node_modules/
 dist/
+/public/generated/
+/data/
 .DS_Store
 .wrangler/
 .env

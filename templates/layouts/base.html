@@ -1,0 +1,52 @@
+{{define "base"}}<!doctype html>
+<html lang="en" data-page="{{.Page}}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="{{.Description}}">
+  <meta name="theme-color" content="#171815">
+  <meta property="og:title" content="{{.Title}}">
+  <meta property="og:description" content="{{.Description}}">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="/og.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>{{.Title}}</title>
+  <link rel="stylesheet" href="/public/css/tokens.css">
+  <link rel="stylesheet" href="/public/css/base.css">
+  <link rel="stylesheet" href="/public/css/layout.css">
+  <link rel="stylesheet" href="/public/css/components.css">
+  <link rel="stylesheet" href="/public/css/experience.css">
+  <script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.7/dist/htmx.min.js" integrity="sha384-ZBXiYtYQ6hJ2Y0ZNoYuI+Nq5MqWBr+chMrS/RkXpNzQCApHEhOt2aY8EJgqwHLkJ" crossorigin="anonymous" defer></script>
+  {{if eq .Page "home"}}<script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/gsap.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/gsap@3.13.0/dist/ScrollTrigger.min.js" defer></script><script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>{{end}}
+  <script type="module" src="/public/js/app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <header class="site-header" data-site-header>
+    <a class="brand" href="/" aria-label="Esker, home"><span class="brand__mark" aria-hidden="true">E</span><span>Esker</span></a>
+    <p class="service-note" aria-hidden="true"><span>Pass / {{if eq .Page "home"}}00{{else}}01{{end}}</span><span>Season / Now</span></p>
+    <button class="nav-trigger" type="button" aria-expanded="false" aria-controls="site-menu" data-menu-trigger><span>Service index</span><i aria-hidden="true"></i></button>
+    <nav class="site-menu" id="site-menu" aria-label="Primary" data-menu hx-boost="true" inert>
+      <div class="site-menu__inner">
+        <p class="site-menu__label">Tonight’s sequence</p>
+        <a class="site-menu__home" href="/" hx-boost="false">Threshold</a>
+        {{range .Nav}}<a href="{{.URL}}" {{if .Current}}aria-current="page"{{end}}>{{.Label}}</a>{{end}}
+        <p class="site-menu__foot">Seasonal tasting · private tables · collaborations</p>
+      </div>
+    </nav>
+  </header>
+  <main id="main" tabindex="-1" hx-history-elt>
+    {{if eq .Page "home"}}{{template "home-content" .}}{{end}}
+    {{if eq .Page "menu"}}{{template "menu-content" .}}{{end}}
+    {{if eq .Page "private-dining"}}{{template "private-content" .}}{{end}}
+    {{if eq .Page "journal"}}{{template "journal-content" .}}{{end}}
+    {{if eq .Page "reservations"}}{{template "reservations-content" .}}{{end}}
+    {{if eq .Page "prompt"}}{{template "prompt-content" .}}{{end}}
+  </main>
+  <footer class="site-footer" data-page-footer>
+    <a class="brand brand--footer" href="/">Esker</a>
+    <p>Seasonal cooking for a small number of people, served with attention.</p>
+    <nav aria-label="Footer" hx-boost="true"><a href="/menu">Menu</a><a href="/private-dining">Private dining</a><a href="/reservations">Inquire</a><a href="/prompt/">Colophon</a></nav>
+  </footer>
+</body>
+</html>{{end}}

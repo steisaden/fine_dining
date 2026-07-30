@@ -1,0 +1,20 @@
+/* Impeccable · pre-emit direction: service ledger · final millimeter · restrained material palette */
+:root {
+  --bone:#f0ece2; --linen:#d8d1c3; --charcoal:#171815; --steel:#383b37;
+  --silver:#a9ada4; --wine:#651f2a; --sorrel:#66724b; --ink:#0e100e;
+  --error-text:#8b1223; --error-field:#fff8f5; --error-surface:#f7e1df;
+  --film-wash-strong:color-mix(in srgb,var(--ink) 48%,transparent);
+  --film-wash-soft:color-mix(in srgb,var(--ink) 18%,transparent);
+  --film-label:color-mix(in srgb,var(--bone) 62%,transparent);
+  --focus-inner:var(--wine); --focus-outer:var(--bone);
+  --font-display:"Bodoni 72","Didot","Iowan Old Style",serif;
+  --font-text:"Avenir Next","Avenir","Helvetica Neue",Arial,sans-serif;
+  --font-measure:"SFMono-Regular","Cascadia Mono","Consolas",monospace;
+  --s1:.25rem; --s2:.5rem; --s3:.75rem; --s4:1rem; --s5:1.5rem; --s6:2rem;
+  --s7:3rem; --s8:4rem; --s9:6rem; --s10:9rem;
+  --rule:1px solid color-mix(in srgb,var(--silver) 54%,transparent);
+  --rule-strong:2px solid var(--wine);
+  --quick:160ms; --measured:520ms; --long:900ms;
+  --ease:cubic-bezier(.22,1,.36,1);
+  --gutter:clamp(1rem,3.5vw,4.5rem);
+}

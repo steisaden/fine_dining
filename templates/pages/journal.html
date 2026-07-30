@@ -1,0 +1,9 @@
+{{define "journal-content"}}
+<header class="page-intro page-intro--journal"><p class="kicker">Journal / working notes</p><h1>What the plate leaves unsaid.</h1><p>Brief notes from an invented culinary practice—about decisions, not credentials.</p></header>
+<section class="journal-list">
+  <article><time datetime="2026-07-18">18.07.26</time><div><p class="kicker">Ingredient note</p><h2>Sorrel at the last moment</h2><p>Heat softens sorrel’s edge quickly. Added at the pass, it keeps enough brightness to make a rich sauce feel exact rather than heavy.</p></div><aside>Acid / leaf / 42°C</aside></article>
+  <article><time datetime="2026-06-02">02.06.26</time><div><p class="kicker">Service note</p><h2>The pause before a main course</h2><p>A pause is useful only when the room needs it. Service follows conversation and appetite; the clock is a reference, not the host.</p></div><aside>Pace / room / listen</aside></article>
+  <article><time datetime="2026-04-21">21.04.26</time><div><p class="kicker">Practice note</p><h2>Three textures are enough</h2><p>Contrast makes an ingredient legible. Beyond that, technique can start describing itself instead of the ingredient.</p></div><aside>Restraint / texture / clarity</aside></article>
+</section>
+<section class="newsletter"><div><p class="kicker">Seasonal notes</p><h2>Occasional writing from the pass.</h2></div><form hx-post="/newsletter" hx-target="#newsletter-status" hx-swap="innerHTML" hx-disabled-elt="find button"><label for="newsletter-email">Email address</label><div><input id="newsletter-email" name="email" type="email" autocomplete="email" required><button type="submit">Join the list</button></div><p id="newsletter-status" aria-live="polite">No schedules, no promotions by volume.</p></form></section>
+{{end}}
