@@ -50,7 +50,7 @@ func (a *App) page(w http.ResponseWriter, r *http.Request) {
 func pageData(info struct{ title, description, page, tmpl string }, courseSlug, serviceSlug string) PageData {
 	return PageData{
 		Title: info.title, Description: info.description, Page: info.page,
-		ContentTemplate: info.tmpl, Nav: nav(info.page), Courses: courses, Services: services,
+		BasePath: "/", ContentTemplate: info.tmpl, Nav: nav(info.page), Courses: courses, Services: services,
 		SelectedCourse: courseBySlug(courseSlug), SelectedService: serviceBySlug(serviceSlug),
 	}
 }
@@ -153,11 +153,12 @@ func (a *App) render(w http.ResponseWriter, name string, data any) {
 	}
 }
 
-func (a *App) Generate(root string) error {
+func (a *App) Generate(root, basePath string) error {
 	routes := []string{"/", "/menu", "/private-dining", "/journal", "/reservations", "/prompt/"}
 	for _, route := range routes {
 		info := pageInfo[route]
 		data := pageData(info, "", "")
+		data.BasePath = basePath
 		if info.page == "prompt" {
 			raw, _ := os.ReadFile("prompt/reconstruction-prompt.md")
 			data.PromptText = string(raw)
@@ -187,6 +188,7 @@ func (a *App) Generate(root string) error {
 	for _, course := range courses {
 		var b bytes.Buffer
 		data := pageData(pageInfo["/menu"], course.Slug, "")
+		data.BasePath = basePath
 		if err := a.templates.ExecuteTemplate(&b, "base", data); err != nil {
 			return err
 		}
@@ -197,6 +199,7 @@ func (a *App) Generate(root string) error {
 	for _, service := range services {
 		var b bytes.Buffer
 		data := pageData(pageInfo["/private-dining"], "", service.Slug)
+		data.BasePath = basePath
 		if err := a.templates.ExecuteTemplate(&b, "base", data); err != nil {
 			return err
 		}

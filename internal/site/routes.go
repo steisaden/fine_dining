@@ -11,6 +11,8 @@ import (
 func (a *App) Routes() http.Handler {
 	mux := http.NewServeMux()
 	mux.Handle("GET /public/", http.StripPrefix("/public/", cacheStatic(http.FileServer(http.Dir("public")))))
+	mux.Handle("GET /css/", cacheStatic(http.FileServer(http.Dir("public"))))
+	mux.Handle("GET /js/", cacheStatic(http.FileServer(http.Dir("public"))))
 	mux.Handle("GET /media/", cacheStatic(http.StripPrefix("/media/", http.FileServer(http.Dir("public/media")))))
 	mux.Handle("GET /og.png", cacheStatic(http.FileServer(http.Dir("public"))))
 	mux.HandleFunc("GET /", a.page)

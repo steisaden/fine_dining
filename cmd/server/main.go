@@ -11,6 +11,7 @@ import (
 func main() {
 	addr := flag.String("addr", ":8080", "listen address")
 	generate := flag.String("generate", "", "write pre-rendered pages to a directory")
+	basepath := flag.String("basepath", "/", "base URL path for generated pages (e.g. /fine_dining/)")
 	flag.Parse()
 
 	app, err := site.New()
@@ -18,7 +19,7 @@ func main() {
 		log.Fatal(err)
 	}
 	if *generate != "" {
-		if err := app.Generate(*generate); err != nil {
+		if err := app.Generate(*generate, *basepath); err != nil {
 			log.Fatal(err)
 		}
 		return

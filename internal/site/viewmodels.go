@@ -7,6 +7,7 @@ type NavItem struct {
 
 type PageData struct {
 	Title, Description, Page, ContentTemplate string
+	BasePath                                  string
 	Nav                                       []NavItem
 	Courses                                   []Course
 	Services                                  []Service
