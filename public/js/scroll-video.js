@@ -1,3 +1,12 @@
+/**
+ * ScrollVideo — scroll-driven video scrubber with mobile support
+ *
+ * Mobile-critical patterns drawn from three production references:
+ *   - threadhaus: play()/pause() unlock on first touch, coarse-device seek throttling
+ *   - htmx_video_website_watch: requestVideoFrameCallback loop, simplified seek queue
+ *   - wallpaperdemo: GSAP ScrollTrigger integration, decoder release timer fallback
+ */
+
 export const SCROLL_VIDEO_CONFIG = Object.freeze({
   damping: 14.0,
   seekThreshold: 1 / 75,
@@ -27,17 +36,49 @@ export class ScrollVideo {
     this.visible = !document.hidden;
     this.reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // ── Mobile-critical state ────────────────────────────────
+    this.primed = false;                       // has video decoded at least one frame?
+    this.seekPending = false;                  // waiting for decoder to finish a seek?
+    this.decoderTimer = 0;                     // fallback timer when seeked never fires
+    this.videoFrameId = 0;                     // requestVideoFrameCallback handle
+    this.lastSeekAt = 0;                       // timestamp of last seek to throttle on mobile
+    this.coarse =
+      matchMedia("(pointer: coarse)").matches ||
+      navigator.hardwareConcurrency <= 4;
+    this.seekInterval = this.coarse ? 50 : 33; // ms between seeks (20 fps mobile, 30 fps desktop)
+
+    // Bind methods
     this.onMetadata = this.onMetadata.bind(this);
     this.onSeeked = this.onSeeked.bind(this);
     this.onVisibility = this.onVisibility.bind(this);
     this.onGeometry = this.onGeometry.bind(this);
     this.tick = this.tick.bind(this);
     this.onScroll = this.onScroll.bind(this);
+    this._onFirstInteraction = this._onFirstInteraction.bind(this);
 
+    // ── Harden video element for iOS ──────────────────────────
+    this.video.muted = true;
+    this.video.defaultMuted = true;
+    this.video.playsInline = true;
+    this.video.setAttribute("muted", "");
+    this.video.setAttribute("playsinline", "");
+    this.video.setAttribute("webkit-playsinline", "");
+    // preload=metadata is safer on mobile (auto can be ignored/blocked)
+    this.video.preload = "metadata";
+
+    // ── Event listeners ───────────────────────────────────────
     this.video.addEventListener("loadedmetadata", this.onMetadata);
     this.video.addEventListener("seeked", this.onSeeked);
+    this.video.addEventListener("canplay", () => this._markReady());
+    this.video.addEventListener("loadeddata", () => this._markReady());
+    this.video.addEventListener("progress", () => this._flushPending());
     document.addEventListener("visibilitychange", this.onVisibility);
     addEventListener("resize", this.onGeometry, { passive: true });
+
+    // Mobile unlock: iOS Safari requires a user gesture to init the audio/video pipeline.
+    // We call play().then(pause) on first touch so subsequent currentTime seeks work.
+    window.addEventListener("touchstart", this._onFirstInteraction, { passive: true, once: true });
+    window.addEventListener("pointerdown", this._onFirstInteraction, { passive: true, once: true });
 
     this.observer = new ResizeObserver(this.onGeometry);
     this.observer.observe(root);
@@ -46,9 +87,100 @@ export class ScrollVideo {
     this.onGeometry();
     this.updateChapters(0);
 
-    if (this.video.readyState >= 1) this.onMetadata();
+    // Kick off loading if metadata already available; otherwise force load()
+    if (this.video.readyState >= 1) {
+      this.onMetadata();
+    } else {
+      this.video.load();
+    }
   }
 
+  // ── Mobile video unlock ─────────────────────────────────────
+  _onFirstInteraction() {
+    if (!this.video || this.video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      this._removeUnlockListeners();
+      return;
+    }
+    // play() triggers the iOS media pipeline; immediately pause so we can seek.
+    const playback = this.video.play();
+    if (playback) {
+      playback
+        .then(() => {
+          this.video.pause();
+          this._primeFrame();
+        })
+        .catch(() => this._primeFrame());
+    }
+    this._removeUnlockListeners();
+  }
+
+  _removeUnlockListeners() {
+    window.removeEventListener("touchstart", this._onFirstInteraction);
+    window.removeEventListener("pointerdown", this._onFirstInteraction);
+  }
+
+  // ── Prime the first frame (ensures decoder is ready to seek) ─
+  _primeFrame() {
+    if (!this.video || this.video.readyState < HTMLMediaElement.HAVE_METADATA || !this.duration) return;
+    if (!this.primed) {
+      this.primed = true;
+      this.video.pause();
+      const initialTime = Math.max(0.001, Math.min(this.targetTime || 0.001, this.duration));
+      this.renderedTime = initialTime;
+      this._forceSeek(initialTime);
+    }
+    this._flushPending();
+  }
+
+  // Mark video as visually ready
+  _markReady() {
+    if (!this.video || this.video.readyState < HTMLMediaElement.HAVE_CURRENT_DATA) return;
+    this.video.classList.add("is-ready");
+    if (this.status) {
+      this.status.textContent = "Film ready";
+    }
+  }
+
+  // ── Flush queued seek after decoder reports it's free ────────
+  _flushPending() {
+    if (this.seekPending || this.video?.seeking || this.queuedTime === null) return;
+    const next = this.queuedTime;
+    this.queuedTime = null;
+    this.requestSeek(next);
+  }
+
+  // ── Decoder lock management (with timeout fallback for mobile) ──
+  _releaseSeekLock() {
+    if (!this.seekPending) return;
+    // Cancel the requestVideoFrameCallback if we used one
+    if (this.videoFrameId && this.video && "cancelVideoFrameCallback" in this.video) {
+      this.video.cancelVideoFrameCallback(this.videoFrameId);
+      this.videoFrameId = 0;
+    }
+    clearTimeout(this.decoderTimer);
+    this.decoderTimer = 0;
+    this.seekPending = false;
+    this._markReady();
+    this._flushPending();
+  }
+
+  // Wait for the decoder to actually paint the new frame.
+  // Uses requestVideoFrameCallback when available, with a timeout fallback.
+  _waitForDecodedFrame() {
+    if (!this.video) return;
+    clearTimeout(this.decoderTimer);
+    // Fallback: if seeked never fires, release lock after 800ms (mobile) or 500ms (desktop)
+    this.decoderTimer = setTimeout(
+      () => this._releaseSeekLock(),
+      this.coarse ? 800 : 500
+    );
+    // Precision path: wait for the actual decoded frame
+    if ("requestVideoFrameCallback" in this.video) {
+      this.videoFrameId = this.video.requestVideoFrameCallback(() => this._releaseSeekLock());
+    }
+  }
+
+  // ── Progress driver (GSAP ScrollTrigger or native scroll) ───
   installProgressDriver() {
     if (!this.reduced && window.gsap && window.ScrollTrigger) {
       if (!window.__eskerScrollTriggerRegistered) {
@@ -56,8 +188,8 @@ export class ScrollVideo {
         window.__eskerScrollTriggerRegistered = true;
       }
 
-      // Initialize Lenis smooth scroll if available
-      if (window.Lenis) {
+      // Initialize Lenis smooth scroll if available (desktop only)
+      if (window.Lenis && !this.coarse) {
         try {
           this.lenis = new window.Lenis({
             duration: 1.1,
@@ -94,8 +226,7 @@ export class ScrollVideo {
   onMetadata() {
     this.duration = Number.isFinite(this.video.duration) ? this.video.duration : 0;
     if (!this.duration) return;
-    this.video.classList.add("is-ready");
-    this.status.textContent = "Film ready";
+    this._markReady();
 
     if (this.reduced) {
       const representative = Math.min(this.duration * 0.9, this.duration - SCROLL_VIDEO_CONFIG.safeEndPadding);
@@ -105,6 +236,8 @@ export class ScrollVideo {
 
     if (this.scrollTrigger) this.setProgress(this.scrollTrigger.progress);
     else this.onScroll();
+
+    this._primeFrame();
     this.start();
   }
 
@@ -174,7 +307,13 @@ export class ScrollVideo {
     const dt = Math.min(0.1, Math.max(0, (now - this.lastFrame) / 1000));
     this.lastFrame = now;
 
-    const alpha = 1 - Math.exp(-SCROLL_VIDEO_CONFIG.damping * dt);
+    // Adaptive damping: coarse devices get slightly softer response to reduce seek pressure
+    const distance = Math.abs(this.targetTime - this.renderedTime);
+    const response = this.coarse
+      ? (distance > 1.25 ? 12 : distance > 0.25 ? 9 : 7)
+      : SCROLL_VIDEO_CONFIG.damping;
+
+    const alpha = 1 - Math.exp(-response * dt);
     const diff = this.targetTime - this.renderedTime;
 
     if (Math.abs(diff) < 0.0001) {
@@ -188,40 +327,80 @@ export class ScrollVideo {
     this.start();
   }
 
+  // ── Force a seek (used for priming; bypasses throttle) ──────
+  _forceSeek(time) {
+    if (!this.video || !this.duration || this.video.readyState < HTMLMediaElement.HAVE_METADATA) return;
+    const clamped = Math.min(this.duration, Math.max(0.001, time));
+    this.seekPending = true;
+    this.lastSeekAt = performance.now();
+    try {
+      this.video.currentTime = clamped;
+      this._waitForDecodedFrame();
+    } catch {
+      this.seekPending = false;
+      this.queuedTime = clamped;
+    }
+  }
+
   requestSeek(value) {
-    const clamped = Math.min(Math.max(0, this.duration - SCROLL_VIDEO_CONFIG.safeEndPadding), Math.max(0, value));
+    if (!this.video || !this.duration || this.video.readyState < HTMLMediaElement.HAVE_METADATA) return;
+
+    const clamped = Math.min(
+      Math.max(0, this.duration - SCROLL_VIDEO_CONFIG.safeEndPadding),
+      Math.max(0.001, value)
+    );
+
     if (Math.abs(clamped - this.video.currentTime) < SCROLL_VIDEO_CONFIG.seekThreshold) return;
 
-    if (this.video.seeking) {
+    const now = performance.now();
+    // Throttle seeks: if decoder is busy or we're seeking too fast, queue instead
+    if (this.seekPending || this.video.seeking || (now - this.lastSeekAt < this.seekInterval)) {
       this.queuedTime = clamped;
       return;
     }
 
     this.queuedTime = null;
+    this.seekPending = true;
     this.latestIssued = clamped;
-    this.video.currentTime = clamped;
+    this.lastSeekAt = now;
+    try {
+      this.video.currentTime = clamped;
+      this._waitForDecodedFrame();
+    } catch {
+      this.seekPending = false;
+      this.queuedTime = clamped;
+    }
   }
 
   onSeeked() {
-    // When the decoder finishes seeking, seek immediately to the latest renderedTime
-    // if it differs from current position by more than the threshold.
-    if (Math.abs(this.renderedTime - this.video.currentTime) >= SCROLL_VIDEO_CONFIG.seekThreshold) {
-      this.requestSeek(this.renderedTime);
-    } else {
-      this.queuedTime = null;
-    }
+    this._releaseSeekLock();
   }
 
   onVisibility() {
     this.visible = !document.hidden;
     if (!this.visible && this.raf) cancelAnimationFrame(this.raf);
     this.raf = 0;
-    if (this.visible) this.start();
+    if (this.visible) {
+      this.lastFrame = performance.now();
+      // If the video lost its pipeline (common on iOS after tab-switch), reload
+      if (this.video && this.video.readyState < HTMLMediaElement.HAVE_METADATA) {
+        this.video.load();
+      }
+      this.start();
+    }
   }
 
   destroy() {
     if (this.raf) cancelAnimationFrame(this.raf);
     clearTimeout(this.geometryTimer);
+    clearTimeout(this.decoderTimer);
+
+    // Cancel pending requestVideoFrameCallback
+    if (this.videoFrameId && this.video && "cancelVideoFrameCallback" in this.video) {
+      this.video.cancelVideoFrameCallback(this.videoFrameId);
+    }
+
+    this._removeUnlockListeners();
 
     if (this.lenis) {
       try {
