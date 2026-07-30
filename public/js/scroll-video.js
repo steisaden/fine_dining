@@ -1,15 +1,18 @@
 /**
- * ScrollVideo — scroll-driven video scrubber with mobile support
+ * ScrollVideo — scroll-driven video scrubber & unified timeline controller
  *
- * Robust geometry-based scroll progress (-rect.top / travel) matching production references
- * (threadhaus, htmx_video_website_watch, wallpaperdemo) for 100% reliable mobile iOS/Android support.
+ * Implements:
+ *   - Cinematic video scrub synced to scroll RAF loop
+ *   - Local chapter progress (Approach → Active Reading Plateau → Exit)
+ *   - CSS variable driven motion (--chapter-opacity, --chapter-y, --chapter-blur)
+ *   - Unified progress rail & active navigation state
+ *   - Accessible click & keyboard navigation on [data-index-item]
  */
 
 export const SCROLL_VIDEO_CONFIG = Object.freeze({
   damping: 14.0,
   seekThreshold: 1 / 75,
   safeEndPadding: 1 / 120,
-  chapters: [0, 0.17, 0.39, 0.64, 0.82, 1],
 });
 
 export class ScrollVideo {
@@ -19,37 +22,45 @@ export class ScrollVideo {
     this.status = root.querySelector("[data-video-status]");
     this.chapters = [...root.querySelectorAll("[data-chapter]")];
     this.indexItems = [...root.querySelectorAll("[data-index-item]")];
+    this.progressFill = root.querySelector("[data-progress-fill]");
     this.duration = 0;
     this.targetTime = 0;
     this.renderedTime = 0;
     this.queuedTime = null;
     this.latestIssued = 0;
     this.raf = 0;
+    this.ticking = false;
     this.lastFrame = performance.now();
     this.visible = !document.hidden;
     this.reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    // ── Mobile-critical state ────────────────────────────────
-    this.primed = false;                       // has video decoded at least one frame?
-    this.seekPending = false;                  // waiting for decoder to finish a seek?
-    this.decoderTimer = 0;                     // fallback timer when seeked never fires
-    this.videoFrameId = 0;                     // requestVideoFrameCallback handle
-    this.lastSeekAt = 0;                       // timestamp of last seek to throttle on mobile
+    // Mobile/Hardware throttles
+    this.primed = false;
+    this.seekPending = false;
+    this.decoderTimer = 0;
+    this.videoFrameId = 0;
+    this.lastSeekAt = 0;
     this.coarse =
       matchMedia("(pointer: coarse)").matches ||
       navigator.hardwareConcurrency <= 4;
-    this.seekInterval = this.coarse ? 45 : 30; // ms between seeks (~22 fps mobile, 33 fps desktop)
+    this.seekInterval = this.coarse ? 45 : 30;
+
+    // Cached layout geometry
+    this.startY = 0;
+    this.distance = 1;
 
     // Bind methods
     this.onMetadata = this.onMetadata.bind(this);
     this.onSeeked = this.onSeeked.bind(this);
     this.onVisibility = this.onVisibility.bind(this);
+    this.onGeometry = this.onGeometry.bind(this);
+    this.onScroll = this.onScroll.bind(this);
     this.tick = this.tick.bind(this);
     this._onFirstInteraction = this._onFirstInteraction.bind(this);
 
     if (!this.video) return;
 
-    // ── Harden video element for iOS Safari & Chrome ─────────
+    // iOS WebKit video flags
     this.video.muted = true;
     this.video.defaultMuted = true;
     this.video.playsInline = true;
@@ -60,7 +71,7 @@ export class ScrollVideo {
     this.video.setAttribute("autoplay", "");
     this.video.preload = "metadata";
 
-    // ── Event listeners ───────────────────────────────────────
+    // Event listeners
     this.video.addEventListener("loadedmetadata", this.onMetadata);
     this.video.addEventListener("seeked", this.onSeeked);
     this.video.addEventListener("canplay", () => this._markReady());
@@ -68,28 +79,68 @@ export class ScrollVideo {
     this.video.addEventListener("progress", () => this._flushPending());
     document.addEventListener("visibilitychange", this.onVisibility);
 
-    // Mobile unlock: iOS Safari requires a user gesture to init the audio/video pipeline.
+    // Mobile media unlock
     window.addEventListener("touchstart", this._onFirstInteraction, { passive: true, once: true });
     window.addEventListener("pointerdown", this._onFirstInteraction, { passive: true, once: true });
 
-    this.updateChapters(0);
+    // Click and keyboard navigation handlers
+    this.installNavHandlers();
 
-    // Force load if needed
+    // Geometry observer
+    this.observer = new ResizeObserver(this.onGeometry);
+    this.observer.observe(root);
+    this.onGeometry();
+
+    this.updateTimeline(0);
+
+    // Kick off load
     if (this.video.readyState >= 1) {
       this.onMetadata();
     } else {
       this.video.load();
     }
 
+    // Scroll listener
+    window.addEventListener("scroll", this.onScroll, { passive: true });
     this.start();
   }
 
+  // ── Cache geometry measurements (debounced / on geometry change) ─
+  onGeometry() {
+    const rect = this.root.getBoundingClientRect();
+    this.startY = scrollY + rect.top;
+    this.distance = Math.max(1, this.root.offsetHeight - window.innerHeight);
+  }
+
   // ── Calculate scroll progress directly from DOM geometry ──
-  // Works 100% reliably on all browsers (iOS Safari, Chrome mobile, desktop)
   calculateProgress() {
     const rect = this.root.getBoundingClientRect();
     const travel = Math.max(1, this.root.offsetHeight - window.innerHeight);
     return Math.min(1, Math.max(0, -rect.top / travel));
+  }
+
+  // ── Interactive Navigation (Click / Keydown) ───────────────
+  installNavHandlers() {
+    this.indexItems.forEach((item, index) => {
+      const selectChapter = (e) => {
+        e.preventDefault();
+        const total = this.indexItems.length;
+        if (!total) return;
+        const targetP = index / (total - 1);
+        const targetScroll = this.startY + (targetP * this.distance);
+        window.scrollTo({
+          top: targetScroll,
+          behavior: this.reduced ? "instant" : "smooth",
+        });
+      };
+
+      item.addEventListener("click", selectChapter);
+      item.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          selectChapter(e);
+        }
+      });
+    });
   }
 
   // ── Mobile video unlock ─────────────────────────────────────
@@ -117,7 +168,6 @@ export class ScrollVideo {
     window.removeEventListener("pointerdown", this._onFirstInteraction);
   }
 
-  // ── Prime the first frame ───────────────────────────────────
   _primeFrame() {
     if (!this.video || this.video.readyState < HTMLMediaElement.HAVE_METADATA || !this.duration) return;
     if (!this.primed) {
@@ -184,7 +234,6 @@ export class ScrollVideo {
     const progress = this.calculateProgress();
     this.setProgress(progress);
 
-    // Silent play/pause attempt to prime decoder
     const p = this.video.play();
     if (p && typeof p.then === "function") {
       p.then(() => {
@@ -205,7 +254,8 @@ export class ScrollVideo {
     }
   }
 
-  updateChapters(progress) {
+  // ── Unified Timeline Update (Text Motion Curve, Menu, Rail) ─
+  updateTimeline(progress) {
     const totalChapters = this.chapters.length;
     if (!totalChapters) return;
 
@@ -218,29 +268,79 @@ export class ScrollVideo {
       }
     }
 
-    // Update chapter index active state
-    this.indexItems.forEach((item, i) => item.classList.toggle("is-active", i === active));
+    // Active navigation item and aria-current
+    this.indexItems.forEach((item, i) => {
+      const isActive = i === active;
+      item.classList.toggle("is-active", isActive);
+      if (isActive) item.setAttribute("aria-current", "true");
+      else item.removeAttribute("aria-current");
+    });
 
-    // Spatial vertical gliding animation for each chapter synced to scroll position
+    // Update Progress Rail
+    if (this.progressFill) {
+      this.progressFill.style.transform = `scaleY(${progress.toFixed(4)})`;
+    }
+
+    // Scroll-Linked Text Motion Curve:
+    //   - Approach (-1.0 to -0.25): translateY 28px->0, opacity 0->1, blur 8px->0
+    //   - Plateau (-0.25 to +0.25): translateY 0, opacity 1, blur 0
+    //   - Exit (+0.25 to +1.0): translateY 0->-28px, opacity 1->0, blur 0->6px
     this.chapters.forEach((chapter, i) => {
-      const targetP = i * step; // 0.0, 0.25, 0.5, 0.75, 1.0
-      const dist = (progress - targetP) / step; // -1 to +1 between adjacent chapters
+      const targetP = i * step;
+      const dist = (progress - targetP) / step; // -1 to +1
 
-      // Opacity peaks at 1 when dist == 0, fades out when |dist| >= 0.7
-      const opacity = Math.max(0, 1 - Math.abs(dist) * 1.45);
+      let opacity = 0;
+      let translateY = 28;
+      let blur = 8;
 
-      // Y offset: moves from +60px (entering from below) to -60px (exiting above)
-      const y = -dist * 60;
+      if (dist < -1.0 || dist > 1.0) {
+        opacity = 0;
+        translateY = dist < 0 ? 28 : -28;
+        blur = dist < 0 ? 8 : 6;
+      } else if (dist >= -1.0 && dist < -0.25) {
+        const ratio = (dist + 1.0) / 0.75;
+        opacity = ratio;
+        translateY = (1 - ratio) * 28;
+        blur = (1 - ratio) * 8;
+      } else if (dist >= -0.25 && dist <= 0.25) {
+        opacity = 1.0;
+        translateY = 0;
+        blur = 0;
+      } else if (dist > 0.25 && dist <= 1.0) {
+        const ratio = (dist - 0.25) / 0.75;
+        opacity = 1.0 - ratio;
+        translateY = -ratio * 28;
+        blur = ratio * 6;
+      }
 
-      if (opacity > 0.01) {
+      if (this.reduced) {
+        blur = 0;
+        translateY = 0;
+      }
+
+      // Expose properties to CSS Custom Properties
+      chapter.style.setProperty("--chapter-opacity", opacity.toFixed(3));
+      chapter.style.setProperty("--chapter-y", `${translateY.toFixed(1)}px`);
+      chapter.style.setProperty("--chapter-blur", `${blur.toFixed(1)}px`);
+
+      if (opacity > 0.005) {
         chapter.style.visibility = "visible";
-        chapter.style.opacity = opacity.toFixed(3);
-        chapter.style.transform = `translate3d(0, ${y.toFixed(1)}px, 0)`;
       } else {
         chapter.style.visibility = "hidden";
-        chapter.style.opacity = "0";
-        chapter.style.transform = `translate3d(0, 60px, 0)`;
       }
+    });
+  }
+
+  onScroll() {
+    if (this.ticking) return;
+    this.ticking = true;
+    requestAnimationFrame(() => {
+      if (this.visible && !this.reduced) {
+        const rawProgress = this.calculateProgress();
+        this.setProgress(rawProgress);
+        this.updateTimeline(rawProgress);
+      }
+      this.ticking = false;
     });
   }
 
@@ -258,12 +358,10 @@ export class ScrollVideo {
     const dt = Math.min(0.1, Math.max(0.001, (now - this.lastFrame) / 1000));
     this.lastFrame = now;
 
-    // Direct geometry calculation every tick ensures scroll progress is ALWAYS up to date
     const rawProgress = this.calculateProgress();
     this.setProgress(rawProgress);
 
     if (this.duration > 0) {
-      // Smooth exponential damping
       const distance = Math.abs(this.targetTime - this.renderedTime);
       const response = this.coarse
         ? (distance > 1.25 ? 12 : distance > 0.25 ? 9 : 7)
@@ -281,7 +379,7 @@ export class ScrollVideo {
       this.requestSeek(this.renderedTime);
     }
 
-    this.updateChapters(this.progress ?? 0);
+    this.updateTimeline(this.progress ?? 0);
     this.start();
   }
 
@@ -353,7 +451,9 @@ export class ScrollVideo {
       this.video.cancelVideoFrameCallback(this.videoFrameId);
     }
 
+    this.observer?.disconnect();
     this._removeUnlockListeners();
+    window.removeEventListener("scroll", this.onScroll);
     this.video?.removeEventListener("loadedmetadata", this.onMetadata);
     this.video?.removeEventListener("seeked", this.onSeeked);
     document.removeEventListener("visibilitychange", this.onVisibility);

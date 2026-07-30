@@ -1,14 +1,25 @@
 {{define "home-content"}}
 <section class="film-experience" data-scroll-video-root>
   <div class="film-stage">
-    <video class="film" data-scroll-video src="media/fine_dining_60fps.mp4" muted playsinline webkit-playsinline autoplay preload="metadata" fetchpriority="high" disablepictureinpicture aria-hidden="true">
-      <source src="media/fine_dining_60fps.mp4" type="video/mp4">
-    </video>
+    <div class="film-aperture">
+      <video class="film" data-scroll-video src="media/fine_dining_60fps.mp4" muted playsinline webkit-playsinline autoplay preload="metadata" fetchpriority="high" disablepictureinpicture aria-hidden="true">
+        <source src="media/fine_dining_60fps.mp4" type="video/mp4">
+      </video>
+    </div>
     <div class="film-wash" aria-hidden="true"></div>
     <p class="film-loading" role="status" data-video-status>Preparing the film</p>
-    <ol class="chapter-index" aria-label="Film chapters">
-      <li data-index-item><span>01</span>Surface</li><li data-index-item><span>02</span>Gesture</li><li data-index-item><span>03</span>Composition</li><li data-index-item><span>04</span>At your table</li><li data-index-item><span>05</span>Finished course</li>
-    </ol>
+    <div class="chapter-nav-wrapper">
+      <ol class="chapter-index" aria-label="Film chapters">
+        <li data-index-item="0" tabindex="0" role="button" aria-label="Navigate to Chapter 01: Surface"><span class="chapter-num">01</span><span class="chapter-name">Surface</span></li>
+        <li data-index-item="1" tabindex="0" role="button" aria-label="Navigate to Chapter 02: Gesture"><span class="chapter-num">02</span><span class="chapter-name">Gesture</span></li>
+        <li data-index-item="2" tabindex="0" role="button" aria-label="Navigate to Chapter 03: Composition"><span class="chapter-num">03</span><span class="chapter-name">Composition</span></li>
+        <li data-index-item="3" tabindex="0" role="button" aria-label="Navigate to Chapter 04: At your table"><span class="chapter-num">04</span><span class="chapter-name">At your table</span></li>
+        <li data-index-item="4" tabindex="0" role="button" aria-label="Navigate to Chapter 05: Finished course"><span class="chapter-num">05</span><span class="chapter-name">Finished course</span></li>
+      </ol>
+      <div class="chapter-progress-track" aria-hidden="true">
+        <div class="chapter-progress-fill" data-progress-fill></div>
+      </div>
+    </div>
     <div class="chapter chapter--1" data-chapter="0">
       <p class="chapter__measure">00.0 mm / Surface</p>
       <h1>The course begins<br>at the edge of restraint.</h1>
