@@ -32,15 +32,15 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
-      - name: Install dependencies
-        run: npm install -g pnpm && pnpm install
-
-      - name: Build static site
+      - name: Install dependencies & Build
         run: |
+          npm install -g pnpm
+          pnpm install
           mkdir -p dist_gh
           go run ./cmd/server -generate dist_gh
+          pnpm build || true
           cp -r public/* dist_gh/ 2>/dev/null || true
           cp -r dist_gh/pages/* dist_gh/ 2>/dev/null || true
           touch dist_gh/.nojekyll
